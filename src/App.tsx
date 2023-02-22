@@ -13,6 +13,7 @@ function App() {
   });
 
   const inputValue = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const getNewQueueWithLowestAmountOfItems = () => {
     let newQueue = {
@@ -42,14 +43,15 @@ function App() {
 
   const pushToQueue = (e: React.FormEvent<HTMLInputElement>) => {
     e.preventDefault();
-    if (!inputValue.current?.value || +inputValue.current?.value <= 0) return;
+    if (!inputValue.current?.value || inputValue.current?.valueAsNumber <= 0) return;
 
     const { newQueueNumber } = getNewQueueWithLowestAmountOfItems();
+    let newCustomerItems = inputValue.current!.valueAsNumber;
 
     setQueue((oldQueue) => {
       let newCustomer = {
         id: (oldQueue[newQueueNumber][oldQueue[newQueueNumber].length - 1]?.id ?? -1) + 1,
-        items: +inputValue.current!.value,
+        items: newCustomerItems,
       };
 
       return {
@@ -57,6 +59,8 @@ function App() {
         [newQueueNumber]: [...oldQueue[newQueueNumber], newCustomer],
       };
     });
+
+    formRef.current?.reset();
   };
 
   useEffect(() => {
@@ -88,7 +92,10 @@ function App() {
     <div className='min-h-screen pt-20 flex items-center flex-col gap-14 bg-gray-900 text-white font-bold'>
       <h1 className='text-3xl font-bold'>Shopping queue</h1>
 
-      <form className='flex gap-6'>
+      <form
+        ref={formRef}
+        className='flex gap-6'
+      >
         <input
           ref={inputValue}
           type='number'
