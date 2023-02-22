@@ -14,34 +14,39 @@ function App() {
 
   const inputValue = useRef<HTMLInputElement>(null);
 
-  const pushToQueue = () => {
-    if (!inputValue.current?.value || +inputValue.current?.value <= 0) return;
-
+  const getNewQueueWithLowestAmountOfItems = () => {
     let newQueue = {
-      queueNumber: Object.keys(queue)[0],
-      totalAmountOfItems: Object.values(queue)[0].reduce((acc, { id, items }) => {
+      newQueueNumber: Object.keys(queue)[0],
+      totalAmountOfItemsInNewQueue: Object.values(queue)[0].reduce((acc, { items }) => {
         acc += items;
         return acc;
       }, 0),
     };
 
     Object.entries(queue).forEach(([key, value]) => {
-      let totalAmountOfItems = value.reduce((acc, { id, items }) => {
+      let totalAmountOfRestItems = value.reduce((acc, { items }) => {
         acc += items;
         return acc;
       }, 0);
 
-      if (totalAmountOfItems < newQueue.totalAmountOfItems) {
+      if (totalAmountOfRestItems < newQueue.totalAmountOfItemsInNewQueue) {
         newQueue = {
-          queueNumber: key,
-          totalAmountOfItems,
+          newQueueNumber: key,
+          totalAmountOfItemsInNewQueue: totalAmountOfRestItems,
         };
       }
     });
 
-    setQueue((oldQueue) => {
-      const newQueueNumber = newQueue.queueNumber;
+    return newQueue;
+  };
 
+  const pushToQueue = (e: React.FormEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    if (!inputValue.current?.value || +inputValue.current?.value <= 0) return;
+
+    const { newQueueNumber } = getNewQueueWithLowestAmountOfItems();
+
+    setQueue((oldQueue) => {
       let newCustomer = {
         id: (oldQueue[newQueueNumber][oldQueue[newQueueNumber].length - 1]?.id ?? -1) + 1,
         items: +inputValue.current!.value,
@@ -75,6 +80,7 @@ function App() {
         }, {} as TQueue);
       });
     }, 1000);
+
     return () => clearInterval(removeUserItem);
   }, [queue]);
 
@@ -82,19 +88,20 @@ function App() {
     <div className='min-h-screen pt-20 flex items-center flex-col gap-14 bg-gray-900 text-white font-bold'>
       <h1 className='text-3xl font-bold'>Shopping queue</h1>
 
-      <div className='flex gap-6'>
+      <form className='flex gap-6'>
         <input
           ref={inputValue}
           type='number'
+          required
           className='bg-inherit border-2 rounded-xl p-3'
         />
-        <button
+        <input
+          type='submit'
+          value='checkout'
           className='border-2 rounded-xl p-3 px-6 font-bold hover:scale-105 transition-all'
           onClick={pushToQueue}
-        >
-          checkout
-        </button>
-      </div>
+        />
+      </form>
 
       <div className='flex gap-8'>
         {Object.entries(queue).map(([key, value]) => (
